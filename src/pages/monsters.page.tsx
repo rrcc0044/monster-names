@@ -1,42 +1,33 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 import { IMonster } from 'types/monsters.types'
 import { CardList } from 'components/card-list/card-list.component'
 import { Search } from 'components/search/search.component'
 
-interface IState {
-  monsters: Array<IMonster>
-  search: string
-}
+export const Monsters: React.FC = () => {
+  const [monsters, setMonsters] = useState<Array<IMonster>>([])
+  const [search, setSearch] = useState<string>('')
 
-export class Monsters extends React.Component<{}, IState> {
-  state: IState = {
-    monsters: [],
-    search: '',
+  useEffect(() => {
+    const fetchMonsters = async () => {
+      const response = await fetch('https://jsonplaceholder.typicode.com/users')
+      const jsonResp = await response.json()
+      setMonsters(jsonResp.map((monster: IMonster) => ({ ...monster, image: `https://robohash.org/${monster.id}?set=set2&size=200x200` })))
+    }
+
+    fetchMonsters()
+  }, [])
+
+  const handleOnInput = (event: React.FormEvent) => {
+    setSearch(((event.target as HTMLInputElement).value))
   }
 
-  componentDidMount() {
-    fetch('https://jsonplaceholder.typicode.com/users')
-    .then(result => result.json())
-    .then(monsters => this.setState({
-      monsters: monsters.map(
-        (monster: IMonster) => ( {...monster, image: `https://robohash.org/${monster.id}?set=set2&size=200x200`} )
-      )
-    }))
-  }
+  const filteredMonsters = monsters.filter((monster: IMonster) => monster.name.toLowerCase().includes(search))
 
-  handleOnInput = (event: React.FormEvent) => {
-    const search = ((event.target as HTMLInputElement).value)
-    this.setState({search})
-  }
-
-  render() {
-    const monsters = this.state.monsters.filter((monster) => monster.name.toLowerCase().includes(this.state.search))
-    return(
+  return (
       <>
-        <Search onInput={this.handleOnInput} placeholder="Look for monsters to hire"/>
-        <CardList items={monsters}/>
+        <Search onInput={handleOnInput} placeholder="Look for monsters to hire"/>
+        <CardList items={filteredMonsters}/>
       </>
-    )
-  }
+  )
 }
